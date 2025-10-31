@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "784790960034",
+    "project_id": "gamequest-m",
+    "storage_bucket": "gamequest-m.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:784790960034:android:1f621c4801efc314ae64fb",
+        "android_client_info": {
+          "package_name": "com.example.gamequest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnSIOJxfWss_-8Or75-AV51B-r22ys4O4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
