@@ -17,7 +17,8 @@ class BadgeUnlockAnimation extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Lottie.asset('assets/animations/badge_unlock.json', width: 120, repeat: false),
+          Lottie.asset('assets/animations/badge_unlock.json',
+              width: 120, repeat: false),
           const SizedBox(height: 12),
           Image.asset(badgeIconPath, width: 48, height: 48),
           const SizedBox(height: 8),

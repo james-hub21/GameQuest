@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/firestore_service.dart';
+import '../services/supabase_service.dart';
 import '../models/user_model.dart';
 import '../widgets/badge_icon.dart';
 
@@ -9,14 +9,14 @@ class LeaderboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final firestore = Provider.of<FirestoreService>(context);
+    final supabaseService = Provider.of<SupabaseService>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Leaderboard'),
         backgroundColor: Colors.black,
       ),
       body: StreamBuilder<List<AppUser>>(
-        stream: firestore.streamLeaderboard(),
+        stream: supabaseService.streamLeaderboard(),
         builder: (context, snap) {
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -78,23 +78,28 @@ class LeaderboardScreen extends StatelessWidget {
                     ),
                   ),
                   title: Text(
-                    user.name,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    user.displayName,
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   subtitle: Row(
                     children: [
-                      const Icon(Icons.stars, color: Colors.yellowAccent, size: 18),
+                      const Icon(Icons.stars,
+                          color: Colors.yellowAccent, size: 18),
                       const SizedBox(width: 4),
                       Text(
-                        '${user.totalPoints} pts',
-                        style: const TextStyle(color: Colors.yellowAccent, fontWeight: FontWeight.bold),
+                        '${user.points} pts',
+                        style: const TextStyle(
+                            color: Colors.yellowAccent,
+                            fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(width: 12),
                       if (user.badges.isNotEmpty)
                         Row(
                           children: user.badges
                               .map((b) => Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 2.0),
                                     child: BadgeIcon(
                                       iconPath: 'assets/icons/$b.png',
                                       label: '',
@@ -107,7 +112,8 @@ class LeaderboardScreen extends StatelessWidget {
                       if (user.secretReward)
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
-                          child: Image.asset('assets/icons/secret_reward.png', width: 24, height: 24),
+                          child: Image.asset('assets/icons/secret_reward.png',
+                              width: 24, height: 24),
                         ),
                     ],
                   ),

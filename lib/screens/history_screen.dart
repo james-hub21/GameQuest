@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../services/firestore_service.dart';
+import '../services/supabase_service.dart';
 import '../models/dropoff_model.dart';
 
 class HistoryScreen extends StatelessWidget {
@@ -10,7 +10,7 @@ class HistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
-    final firestore = Provider.of<FirestoreService>(context);
+    final supabaseService = Provider.of<SupabaseService>(context);
     final user = auth.user;
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
@@ -21,7 +21,7 @@ class HistoryScreen extends StatelessWidget {
         backgroundColor: Colors.black,
       ),
       body: StreamBuilder<List<DropOff>>(
-        stream: firestore.streamDropOffs(user.uid),
+        stream: supabaseService.streamDropOffs(user.id),
         builder: (context, snap) {
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -29,7 +29,8 @@ class HistoryScreen extends StatelessWidget {
           final dropOffs = snap.data!;
           if (dropOffs.isEmpty) {
             return const Center(
-              child: Text('No confirmed submissions yet.', style: TextStyle(color: Colors.white70)),
+              child: Text('No confirmed submissions yet.',
+                  style: TextStyle(color: Colors.white70)),
             );
           }
           return ListView.builder(
@@ -46,14 +47,19 @@ class HistoryScreen extends StatelessWidget {
                 ),
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
-                  leading: Icon(Icons.devices, color: Colors.blueAccent),
-                  title: Text(d.itemName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  subtitle: Text('Points: ${d.pointsEarned} | ${d.verifiedLocation ?? "UIC"}', style: const TextStyle(color: Colors.white70)),
+                  leading: const Icon(Icons.devices, color: Colors.blueAccent),
+                  title: Text(d.itemName,
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
+                  subtitle: Text(
+                      'Points: ${d.pointsEarned} | ${d.verifiedLocation ?? "UIC"}',
+                      style: const TextStyle(color: Colors.white70)),
                   trailing: Text(
-                    d.confirmedAt != null ?
-                      '${d.confirmedAt!.month}/${d.confirmedAt!.day} ${d.confirmedAt!.hour}:${d.confirmedAt!.minute.toString().padLeft(2, '0')}' :
-                      '',
-                    style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                    d.confirmedAt != null
+                        ? '${d.confirmedAt!.month}/${d.confirmedAt!.day} ${d.confirmedAt!.hour}:${d.confirmedAt!.minute.toString().padLeft(2, '0')}'
+                        : '',
+                    style: const TextStyle(
+                        color: Colors.greenAccent, fontWeight: FontWeight.bold),
                   ),
                 ),
               );

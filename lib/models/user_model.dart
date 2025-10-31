@@ -1,50 +1,53 @@
 class AppUser {
-  final String userId;
-  final String name;
+  final String id;
+  final String displayName;
   final String email;
   final bool isAdmin;
-  final int totalPoints;
+  final int points;
   final List<String> badges;
   final bool secretReward;
   final DateTime? rewardClaimedAt;
   final String? profilePic;
 
   AppUser({
-    required this.userId,
-    required this.name,
+    required this.id,
+    required this.displayName,
     required this.email,
     required this.isAdmin,
-    required this.totalPoints,
+    required this.points,
     required this.badges,
     required this.secretReward,
     this.rewardClaimedAt,
     this.profilePic,
   });
 
-  factory AppUser.fromMap(Map<String, dynamic> data, String id) {
+  factory AppUser.fromMap(Map<String, dynamic> data) {
     return AppUser(
-      userId: id,
-      name: data['name'] ?? '',
+      id: data['id'] ?? '',
+      displayName: data['display_name'] ?? '',
       email: data['email'] ?? '',
-      isAdmin: data['isAdmin'] ?? false,
-      totalPoints: data['totalPoints'] ?? 0,
-      badges: List<String>.from(data['badges'] ?? []),
-      secretReward: data['secretReward'] ?? false,
-      rewardClaimedAt: data['rewardClaimedAt']?.toDate(),
-      profilePic: data['profilePic'],
+      isAdmin: data['is_admin'] ?? false,
+      points: data['points'] ?? 0,
+      badges: List<String>.from(data['badges'] ?? const <String>[]),
+      secretReward: data['secret_reward'] ?? false,
+      rewardClaimedAt: data['reward_claimed_at'] != null
+          ? DateTime.tryParse(data['reward_claimed_at'].toString())
+          : null,
+      profilePic: data['profile_pic'] as String?,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'name': name,
+      'id': id,
+      'display_name': displayName,
       'email': email,
-      'isAdmin': isAdmin,
-      'totalPoints': totalPoints,
+      'is_admin': isAdmin,
+      'points': points,
       'badges': badges,
-      'secretReward': secretReward,
-      'rewardClaimedAt': rewardClaimedAt,
-      'profilePic': profilePic,
+      'secret_reward': secretReward,
+      'reward_claimed_at': rewardClaimedAt?.toIso8601String(),
+      'profile_pic': profilePic,
     };
   }
 }

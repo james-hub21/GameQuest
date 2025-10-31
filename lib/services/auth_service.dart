@@ -1,16 +1,29 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final SupabaseClient _supabase = Supabase.instance.client;
+
   User? user;
   bool isLoading = false;
+  bool isInitializing = true;
   String? error;
 
+  StreamSubscription<AuthState>? _authSubscription;
+
   AuthService() {
-    _auth.authStateChanges().listen((u) {
-      user = u;
+    user = _supabase.auth.currentUser;
+    if (user != null) {
+      isInitializing = false;
+    }
+    _authSubscription = _supabase.auth.onAuthStateChange.listen((data) async {
+      user = data.session?.user;
+      isInitializing = false;
+      if (user != null) {
+        await _ensureUserRecord(user!);
+      }
       notifyListeners();
     });
   }
@@ -19,10 +32,17 @@ class AuthService extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final response = await _supabase.auth
+          .signInWithPassword(email: email, password: password);
+      final signedInUser = response.user ?? _supabase.auth.currentUser;
+      if (signedInUser != null) {
+        await _ensureUserRecord(signedInUser);
+      }
       error = null;
+    } on AuthException catch (e) {
+      error = e.message;
     } catch (e) {
-      error = e.toString();
+      error = 'Unexpected error: $e';
     }
     isLoading = false;
     notifyListeners();
@@ -32,44 +52,56 @@ class AuthService extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      final response =
+          await _supabase.auth.signUp(email: email, password: password);
+      final newUser = response.user ?? _supabase.auth.currentUser;
+      if (newUser != null) {
+        await _ensureUserRecord(newUser, displayName: email.split('@').first);
+      }
       error = null;
+    } on AuthException catch (e) {
+      error = e.message;
     } catch (e) {
-      error = e.toString();
+      error = 'Unexpected error: $e';
     }
     isLoading = false;
     notifyListeners();
   }
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-
   Future<void> signInWithGoogle() async {
     isLoading = true;
     notifyListeners();
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        error = 'Google sign-in aborted';
-        isLoading = false;
-        notifyListeners();
-        return;
-      }
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      await _auth.signInWithCredential(credential);
+      await _supabase.auth.signInWithOAuth(OAuthProvider.google);
       error = null;
+    } on AuthException catch (e) {
+      error = e.message;
     } catch (e) {
-      error = e.toString();
+      error = 'Unexpected error: $e';
     }
     isLoading = false;
     notifyListeners();
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
+    await _supabase.auth.signOut();
+    user = null;
     notifyListeners();
+  }
+
+  Future<void> _ensureUserRecord(User supabaseUser,
+      {String? displayName}) async {
+    final email = supabaseUser.email ?? '';
+    await _supabase.from('users').upsert({
+      'id': supabaseUser.id,
+      'email': email,
+      'display_name': displayName ?? email.split('@').first,
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class NeonButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color color;
   final IconData? icon;
   final bool isLoading;
@@ -10,7 +10,7 @@ class NeonButton extends StatelessWidget {
   const NeonButton({
     super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.color = Colors.greenAccent,
     this.icon,
     this.isLoading = false,
@@ -25,7 +25,10 @@ class NeonButton extends StatelessWidget {
         elevation: 10,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: color, width: 2, strokeAlign: BorderSide.strokeAlignOutside),
+          side: BorderSide(
+              color: color,
+              width: 2,
+              strokeAlign: BorderSide.strokeAlignOutside),
         ),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
       ),
@@ -34,31 +37,35 @@ class NeonButton extends StatelessWidget {
           ? const SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white),
             )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, color: color, size: 22),
-                  const SizedBox(width: 8),
-                ],
-                Text(
-                  text,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 12,
-                        color: color.withOpacity(0.7),
-                        offset: const Offset(0, 0),
-                      ),
-                    ],
+          : FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, color: color, size: 22),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    text,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 12,
+                          color: color.withValues(alpha: 0.7),
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
     );
   }

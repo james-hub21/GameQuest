@@ -19,7 +19,7 @@ class SecretRewardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.yellowAccent.withOpacity(0.5),
+            color: Colors.yellowAccent.withValues(alpha: 0.5),
             blurRadius: 16,
           ),
         ],

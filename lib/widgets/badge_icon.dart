@@ -24,7 +24,7 @@ class BadgeIcon extends StatelessWidget {
             boxShadow: glow
                 ? [
                     BoxShadow(
-                      color: color.withOpacity(0.7),
+                      color: color.withAlpha(179),
                       blurRadius: 16,
                       spreadRadius: 2,
                     ),
@@ -52,7 +52,7 @@ class BadgeIcon extends StatelessWidget {
             shadows: [
               Shadow(
                 blurRadius: 8,
-                color: color.withOpacity(0.7),
+                color: color.withAlpha(179),
                 offset: const Offset(0, 0),
               ),
             ],

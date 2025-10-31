@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../services/firestore_service.dart';
-import '../models/dropoff_model.dart';
+import '../services/supabase_service.dart';
 import '../widgets/neon_button.dart';
 
 class AddItemScreen extends StatefulWidget {
@@ -16,6 +15,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
   final _formKey = GlobalKey<FormState>();
   String? selectedItem;
   bool isSubmitting = false;
+  bool isUploading = false;
+  String? _photoUrl;
   final items = [
     'Phone',
     'Laptop',
@@ -30,9 +31,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthService>(context);
-    final firestore = Provider.of<FirestoreService>(context);
-    final user = auth.user;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add E-Waste Item'),
@@ -47,11 +45,12 @@ class _AddItemScreenState extends State<AddItemScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<String>(
-                  value: selectedItem,
+                  initialValue: selectedItem,
                   items: items
                       .map((item) => DropdownMenuItem(
                             value: item,
-                            child: Text(item, style: const TextStyle(color: Colors.white)),
+                            child: Text(item,
+                                style: const TextStyle(color: Colors.white)),
                           ))
                       .toList(),
                   onChanged: (val) => setState(() => selectedItem = val),
@@ -78,6 +77,25 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   icon: Icons.send,
                   isLoading: isSubmitting,
                 ),
+                const SizedBox(height: 12),
+                NeonButton(
+                  text: _photoUrl != null ? 'Replace Photo' : 'Attach Photo',
+                  onPressed: isUploading ? null : _handleAttachPhoto,
+                  color: Colors.blueAccent,
+                  icon: Icons.photo_camera,
+                  isLoading: isUploading,
+                ),
+                if (_photoUrl != null) ...[
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      _photoUrl!,
+                      height: 180,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -92,31 +110,32 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   Future<void> _submitAsync() async {
     final auth = Provider.of<AuthService>(context, listen: false);
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final supabaseService =
+        Provider.of<SupabaseService>(context, listen: false);
     final user = auth.user;
     if (_formKey.currentState!.validate() && user != null) {
       setState(() {
         isSubmitting = true;
       });
-      await firestore.addDropOff(DropOff(
-        id: '',
-        userId: user.uid,
+      await supabaseService.addDropOff(
+        userId: user.id,
         itemName: selectedItem!,
-        status: 'pending',
-        confirmedBy: null,
-        confirmedAt: null,
-        pointsEarned: 0,
         verifiedLocation: 'UIC Drop-Off',
-      ));
+        photoUrl: _photoUrl,
+      );
+      if (!mounted) return;
       setState(() {
         isSubmitting = false;
+        _photoUrl = null;
       });
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: Colors.black,
-          title: const Text('Submitted', style: TextStyle(color: Colors.greenAccent)),
-          content: const Text('Your item is pending admin confirmation.', style: TextStyle(color: Colors.white)),
+          title: const Text('Submitted',
+              style: TextStyle(color: Colors.greenAccent)),
+          content: const Text('Your item is pending admin confirmation.',
+              style: TextStyle(color: Colors.white)),
           actions: [
             NeonButton(
               text: 'OK',
@@ -127,6 +146,31 @@ class _AddItemScreenState extends State<AddItemScreen> {
         ),
       );
       Navigator.pop(context);
+    }
+  }
+
+  void _handleAttachPhoto() {
+    _attachPhotoAsync();
+  }
+
+  Future<void> _attachPhotoAsync() async {
+    final auth = Provider.of<AuthService>(context, listen: false);
+    final supabaseService =
+        Provider.of<SupabaseService>(context, listen: false);
+    final user = auth.user;
+    if (user == null) return;
+    setState(() {
+      isUploading = true;
+    });
+    final url = await supabaseService.pickAndUpload(
+      bucket: 'uploads',
+      path: 'dropoffs/${user.id}',
+    );
+    if (mounted) {
+      setState(() {
+        _photoUrl = url ?? _photoUrl;
+        isUploading = false;
+      });
     }
   }
 }

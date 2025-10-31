@@ -37,7 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     shadows: [
                       Shadow(
                         blurRadius: 16,
-                        color: Colors.greenAccent.withOpacity(0.7),
+                        color:
+                            Colors.greenAccent.withValues(alpha: 0.7),
                         offset: const Offset(0, 0),
                       ),
                     ],
@@ -54,16 +55,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           labelText: 'Email',
                           labelStyle: const TextStyle(color: Colors.blueAccent),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.blueAccent),
+                            borderSide:
+                                const BorderSide(color: Colors.blueAccent),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.greenAccent),
+                            borderSide:
+                                const BorderSide(color: Colors.greenAccent),
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
                         onChanged: (val) => email = val,
-                        validator: (val) => val != null && val.contains('@') ? null : 'Enter a valid email',
+                        validator: (val) => val != null && val.contains('@')
+                            ? null
+                            : 'Enter a valid email',
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -73,16 +78,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           labelText: 'Password',
                           labelStyle: const TextStyle(color: Colors.blueAccent),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.blueAccent),
+                            borderSide:
+                                const BorderSide(color: Colors.blueAccent),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: Colors.greenAccent),
+                            borderSide:
+                                const BorderSide(color: Colors.greenAccent),
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
                         onChanged: (val) => password = val,
-                        validator: (val) => val != null && val.length >= 6 ? null : 'Min 6 chars',
+                        validator: (val) => val != null && val.length >= 6
+                            ? null
+                            : 'Min 6 chars',
                       ),
                       const SizedBox(height: 24),
                       NeonButton(
@@ -107,7 +116,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           });
                         },
                         child: Text(
-                          isLogin ? "Don't have an account? Register" : "Already have an account? Login",
+                          isLogin
+                              ? "Don't have an account? Register"
+                              : "Already have an account? Login",
                           style: const TextStyle(color: Colors.yellowAccent),
                         ),
                       ),
