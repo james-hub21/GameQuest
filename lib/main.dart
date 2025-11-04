@@ -58,7 +58,9 @@ class GameQuestApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'GameQuest',
-        theme: ThemeData.dark().copyWith(
+        theme: ThemeData.dark(
+          useMaterial3: true,
+        ).copyWith(
           scaffoldBackgroundColor: const Color(0xFF181A20),
           colorScheme: const ColorScheme.dark(
             primary: Colors.greenAccent,
@@ -68,7 +70,6 @@ class GameQuestApp extends StatelessWidget {
           textTheme: ThemeData.dark().textTheme.apply(
                 fontFamily: 'Orbitron',
               ),
-          useMaterial3: true,
         ),
         debugShowCheckedModeBanner: false,
         home: Consumer2<AuthService, SupabaseService>(

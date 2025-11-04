@@ -15,12 +15,22 @@ class AdminScreen extends StatelessWidget {
     final supabaseService = Provider.of<SupabaseService>(context);
     final user = auth.user;
     if (user == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
     return Scaffold(
+      backgroundColor: const Color(0xFF181A20),
       appBar: AppBar(
-        title: const Text('Admin Panel'),
+        title: const Text(
+          'Admin Panel',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
+        ),
         backgroundColor: Colors.black,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.redAccent),
@@ -30,19 +40,20 @@ class AdminScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-            const Text('Pending Submissions',
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Pending Submissions',
                 style: TextStyle(
                   color: Colors.greenAccent,
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
-                )),
-            const SizedBox(height: 8),
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 12),
             StreamBuilder<List<DropOff>>(
               stream: supabaseService.streamPendingDropOffs(),
               builder: (context, snap) {
@@ -51,8 +62,28 @@ class AdminScreen extends StatelessWidget {
                 }
                 final dropOffs = snap.data!;
                 if (dropOffs.isEmpty) {
-                  return const Text('No pending submissions.',
-                      style: TextStyle(color: Colors.white70));
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.greenAccent.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'No pending submissions.',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
                 }
                 return Column(
                   children: dropOffs
@@ -61,14 +92,8 @@ class AdminScreen extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 24),
-            NeonButton(
-              text: 'Leaderboard',
-              onPressed: () => Navigator.pushNamed(context, '/leaderboard'),
-              color: Colors.yellowAccent,
-              icon: Icons.emoji_events,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -83,36 +108,99 @@ class AdminDropOffCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final supabaseService =
         Provider.of<SupabaseService>(context, listen: false);
-    return Card(
-      color: Colors.black,
-      shape: RoundedRectangleBorder(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.black,
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Colors.greenAccent, width: 2),
+        border: Border.all(color: Colors.greenAccent, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.greenAccent.withValues(alpha: 0.4),
+            blurRadius: 12,
+            spreadRadius: 0.5,
+          ),
+        ],
       ),
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListTile(
+      child: InkWell(
         onTap: dropOff.photoUrl != null
             ? () => _showPhoto(context, dropOff.photoUrl!)
             : null,
-        leading: const Icon(Icons.devices, color: Colors.greenAccent),
-        title: Text(dropOff.itemName,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('User: ${dropOff.userId}',
-                style: const TextStyle(color: Colors.white70)),
-            if (dropOff.photoUrl != null)
-              const Text('Tap to preview photo',
-                  style: TextStyle(color: Colors.blueAccent, fontSize: 12)),
-          ],
-        ),
-        trailing: NeonButton(
-          text: 'Confirm',
-          onPressed: () => AdminDropOffCard._handleConfirm(
-              context, supabaseService, dropOff),
-          color: Colors.greenAccent,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.greenAccent.withValues(alpha: 0.2),
+                    ),
+                    child: const Icon(
+                      Icons.devices,
+                      color: Colors.greenAccent,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          dropOff.itemName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'User: ${dropOff.userId.substring(0, 8)}...',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (dropOff.photoUrl != null) ...[
+                const SizedBox(height: 12),
+                const Row(
+                  children: [
+                    Icon(Icons.photo, color: Colors.blueAccent, size: 16),
+                    SizedBox(width: 4),
+                    Text(
+                      'Tap to preview photo',
+                      style: TextStyle(
+                        color: Colors.blueAccent,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: NeonButton(
+                  text: 'Confirm',
+                  onPressed: () => AdminDropOffCard._handleConfirm(
+                      context, supabaseService, dropOff),
+                  color: Colors.greenAccent,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

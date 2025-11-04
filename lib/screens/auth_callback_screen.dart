@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthCallbackScreen extends StatefulWidget {
   const AuthCallbackScreen({super.key});
@@ -17,8 +16,8 @@ class _AuthCallbackScreenState extends State<AuthCallbackScreen> {
 
   Future<void> _handleAuthCallback() async {
     try {
-      final supabase = Supabase.instance.client;
-      await supabase.auth.getSession();
+      // Wait a bit for auth state to propagate
+      await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
         Navigator.of(context).pushReplacementNamed('/');
       }
