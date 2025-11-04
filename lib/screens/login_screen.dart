@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/neon_button.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,13 +21,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                 Text(
                   'GameQuest',
                   style: TextStyle(
@@ -108,6 +112,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         icon: Icons.g_mobiledata,
                         isLoading: auth.isLoading,
                       ),
+                      const SizedBox(height: 12),
+                      NeonButton(
+                        text: 'Test User (Demo)',
+                        onPressed: _handleTestUserSignIn,
+                        color: Colors.purpleAccent,
+                        icon: Icons.person_outline,
+                        isLoading: auth.isLoading,
+                      ),
                       const SizedBox(height: 24),
                       TextButton(
                         onPressed: () {
@@ -123,17 +135,34 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       if (auth.error != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            auth.error!,
-                            style: const TextStyle(color: Colors.redAccent),
+                        Container(
+                          margin: const EdgeInsets.only(top: 16.0),
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.redAccent, width: 1),
                           ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline, 
+                                  color: Colors.redAccent, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  auth.error!,
+                                  style: const TextStyle(color: Colors.redAccent),
+                                ),
+                              ),
+                            ],
                         ),
+                      ),
                     ],
                   ),
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -153,6 +182,17 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         await auth.registerWithEmail(email, password);
       }
+      
+      if (!mounted) return;
+      
+      if (auth.error == null && auth.user != null) {
+        NotificationService.showSuccess(
+          context,
+          isLogin ? 'Welcome back!' : 'Account created successfully!',
+        );
+      } else if (auth.error != null) {
+        NotificationService.showError(context, auth.error!);
+      }
     }
   }
 
@@ -163,5 +203,31 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _googleSignInAsync() async {
     final auth = Provider.of<AuthService>(context, listen: false);
     await auth.signInWithGoogle();
+    
+    if (!mounted) return;
+    
+    if (auth.error != null) {
+      NotificationService.showError(context, auth.error!);
+    }
+  }
+
+  void _handleTestUserSignIn() {
+    _testUserSignInAsync();
+  }
+
+  Future<void> _testUserSignInAsync() async {
+    final auth = Provider.of<AuthService>(context, listen: false);
+    await auth.signInAsTestUser();
+    
+    if (!mounted) return;
+    
+    if (auth.error == null && auth.user != null) {
+      NotificationService.showSuccess(
+        context,
+        'Signed in as test user successfully!',
+      );
+    } else if (auth.error != null) {
+      NotificationService.showError(context, auth.error!);
+    }
   }
 }

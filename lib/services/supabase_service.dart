@@ -51,17 +51,27 @@ class SupabaseService extends ChangeNotifier {
     String? verifiedLocation,
     String? photoUrl,
   }) async {
-    await _supabase.from('drop_offs').insert({
-      'user_id': userId,
-      'item_name': itemName,
-      'status': 'pending',
-      'verified_location': verifiedLocation,
-      'photo_url': photoUrl,
-    });
+    try {
+      await _supabase.from('drop_offs').insert({
+        'user_id': userId,
+        'item_name': itemName,
+        'status': 'pending',
+        'verified_location': verifiedLocation,
+        'photo_url': photoUrl,
+      });
+    } catch (e) {
+      debugPrint('Error adding drop-off: $e');
+      rethrow;
+    }
   }
 
   Future<void> updateDropOff(String id, Map<String, dynamic> data) async {
-    await _supabase.from('drop_offs').update(data).eq('id', id);
+    try {
+      await _supabase.from('drop_offs').update(data).eq('id', id);
+    } catch (e) {
+      debugPrint('Error updating drop-off: $e');
+      rethrow;
+    }
   }
 
   Future<void> confirmDropOff({
@@ -69,26 +79,50 @@ class SupabaseService extends ChangeNotifier {
     required int points,
     String confirmedBy = 'admin',
   }) async {
-    final now = DateTime.now().toIso8601String();
-    await updateDropOff(dropOff.id, {
-      'status': 'confirmed',
-      'confirmed_by': confirmedBy,
-      'confirmed_at': now,
-      'points_earned': points,
-    });
     try {
-      await _supabase.functions.invoke('update_badges', body: {
-        'user_id': dropOff.userId,
-        'points_awarded': points,
-        'drop_off_id': dropOff.id,
+      final now = DateTime.now().toIso8601String();
+      await updateDropOff(dropOff.id, {
+        'status': 'confirmed',
+        'confirmed_by': confirmedBy,
+        'confirmed_at': now,
+        'points_earned': points,
       });
+      
+      // Update user points
+      final currentUser = await _supabase
+          .from('users')
+          .select('points')
+          .eq('id', dropOff.userId)
+          .single();
+      
+      await _supabase.from('users').update({
+        'points': (currentUser['points'] as int? ?? 0) + points,
+      }).eq('id', dropOff.userId);
+      
+      // Update badges
+      try {
+        await _supabase.functions.invoke('update_badges', body: {
+          'user_id': dropOff.userId,
+          'points_awarded': points,
+          'drop_off_id': dropOff.id,
+        });
+      } catch (e) {
+        debugPrint('Failed to invoke update_badges function: $e');
+        // Continue even if badge update fails
+      }
     } catch (e) {
-      debugPrint('Failed to invoke update_badges function: $e');
+      debugPrint('Error confirming drop-off: $e');
+      rethrow;
     }
   }
 
   Future<void> updateUser(String userId, Map<String, dynamic> data) async {
-    await _supabase.from('users').update(data).eq('id', userId);
+    try {
+      await _supabase.from('users').update(data).eq('id', userId);
+    } catch (e) {
+      debugPrint('Error updating user: $e');
+      rethrow;
+    }
   }
 
   Stream<List<DropOff>> streamPendingDropOffs() {
@@ -116,10 +150,15 @@ class SupabaseService extends ChangeNotifier {
   }
 
   Future<void> completeChallenge(String challengeId, String userId) async {
-    await _supabase.rpc('complete_challenge', params: {
-      'challenge_id_input': challengeId,
-      'user_id_input': userId,
-    });
+    try {
+      await _supabase.rpc('complete_challenge', params: {
+        'challenge_id_input': challengeId,
+        'user_id_input': userId,
+      });
+    } catch (e) {
+      debugPrint('Error completing challenge: $e');
+      rethrow;
+    }
   }
 
   Future<String?> uploadBytes({
@@ -129,15 +168,20 @@ class SupabaseService extends ChangeNotifier {
     String? fileName,
     String? mimeType,
   }) async {
-    final resolvedMime = mimeType ?? lookupMimeType('', headerBytes: bytes);
-    final resolvedName = fileName ?? '${DateTime.now().millisecondsSinceEpoch}';
-    final storagePath = p.posix.join(path, resolvedName);
-    await _supabase.storage.from(bucket).uploadBinary(
-          storagePath,
-          Uint8List.fromList(bytes),
-          fileOptions: FileOptions(contentType: resolvedMime),
-        );
-    return getPublicUrl(bucket: bucket, path: storagePath);
+    try {
+      final resolvedMime = mimeType ?? lookupMimeType('', headerBytes: bytes);
+      final resolvedName = fileName ?? '${DateTime.now().millisecondsSinceEpoch}';
+      final storagePath = p.posix.join(path, resolvedName);
+      await _supabase.storage.from(bucket).uploadBinary(
+            storagePath,
+            Uint8List.fromList(bytes),
+            fileOptions: FileOptions(contentType: resolvedMime),
+          );
+      return getPublicUrl(bucket: bucket, path: storagePath);
+    } catch (e) {
+      debugPrint('Error uploading file: $e');
+      rethrow;
+    }
   }
 
   Future<String?> pickAndUpload(
@@ -174,11 +218,16 @@ class SupabaseService extends ChangeNotifier {
   }
 
   Future<String?> uploadProfilePicture(String userId) async {
-    final url =
-        await pickAndUpload(bucket: 'uploads', path: 'profiles/$userId');
-    if (url != null) {
-      await updateUser(userId, {'profile_pic': url});
+    try {
+      final url =
+          await pickAndUpload(bucket: 'uploads', path: 'profiles/$userId');
+      if (url != null) {
+        await updateUser(userId, {'profile_pic': url});
+      }
+      return url;
+    } catch (e) {
+      debugPrint('Error uploading profile picture: $e');
+      rethrow;
     }
-    return url;
   }
 }

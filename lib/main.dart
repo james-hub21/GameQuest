@@ -8,6 +8,7 @@ import 'services/supabase_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/admin_screen.dart';
+import 'screens/auth_callback_screen.dart';
 import 'models/user_model.dart';
 import 'screens/leaderboard_screen.dart';
 import 'screens/history_screen.dart';
@@ -67,6 +68,7 @@ class GameQuestApp extends StatelessWidget {
           textTheme: ThemeData.dark().textTheme.apply(
                 fontFamily: 'Orbitron',
               ),
+          useMaterial3: true,
         ),
         debugShowCheckedModeBanner: false,
         home: Consumer2<AuthService, SupabaseService>(
@@ -101,6 +103,7 @@ class GameQuestApp extends StatelessWidget {
           },
         ),
         routes: {
+          '/auth/callback': (context) => const AuthCallbackScreen(),
           '/admin': (context) {
             final appUser = context.read<SupabaseService>()
                 .streamUser(context.read<AuthService>().user!.id);

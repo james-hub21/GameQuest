@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
+import '../services/notification_service.dart';
 import '../models/user_model.dart';
 import '../widgets/badge_icon.dart';
 import '../widgets/neon_button.dart';
@@ -166,11 +167,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _isUploading = true;
     });
-    await supabaseService.uploadProfilePicture(userId);
-    if (mounted) {
-      setState(() {
-        _isUploading = false;
-      });
+    try {
+      await supabaseService.uploadProfilePicture(userId);
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+        NotificationService.showSuccess(
+          context,
+          'Profile picture updated successfully!',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+        NotificationService.showError(
+          context,
+          'Failed to update profile picture. Please try again.',
+        );
+      }
     }
   }
 }

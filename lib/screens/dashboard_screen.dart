@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
+import '../services/notification_service.dart';
 import '../models/user_model.dart';
 import '../models/challenge_model.dart';
 import '../widgets/neon_button.dart';
@@ -40,18 +41,31 @@ class DashboardScreen extends StatelessWidget {
           appBar: AppBar(
             title: const Text('Dashboard'),
             backgroundColor: Colors.black,
+            elevation: 0,
             actions: [
               IconButton(
                 icon: const Icon(Icons.logout, color: Colors.redAccent),
-                onPressed: () => auth.signOut(),
+                onPressed: () async {
+                  await auth.signOut();
+                  if (context.mounted) {
+                    NotificationService.showInfo(
+                      context,
+                      'You have been signed out',
+                    );
+                  }
+                },
+                tooltip: 'Sign out',
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 // Points summary
                 Center(
                   child: Container(
@@ -190,60 +204,107 @@ class DashboardScreen extends StatelessWidget {
                     return Column(
                       children: challenges.map((c) {
                         final completed = c.completedBy.contains(appUser.id);
-                        return Container(
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: completed
-                                  ? Colors.greenAccent
-                                  : Colors.blueAccent,
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (completed
-                                        ? Colors.greenAccent
-                                        : Colors.blueAccent)
-                                    .withValues(alpha: 0.3),
-                                blurRadius: 12,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                completed
-                                    ? Icons.check_circle
-                                    : Icons.radio_button_unchecked,
+                        return InkWell(
+                          onTap: completed
+                              ? null
+                              : () async {
+                                  try {
+                                    await supabaseService.completeChallenge(
+                                      c.id,
+                                      appUser.id,
+                                    );
+                                    if (context.mounted) {
+                                      NotificationService.showSuccess(
+                                        context,
+                                        'Challenge completed! +${c.points} points earned!',
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      NotificationService.showError(
+                                        context,
+                                        'Failed to complete challenge. Please try again.',
+                                      );
+                                    }
+                                  }
+                                },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
                                 color: completed
                                     ? Colors.greenAccent
                                     : Colors.blueAccent,
+                                width: 2,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  c.description,
-                                  style: TextStyle(
-                                    color: completed
-                                        ? Colors.greenAccent
-                                        : Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (completed
+                                          ? Colors.greenAccent
+                                          : Colors.blueAccent)
+                                      .withValues(alpha: 0.3),
+                                  blurRadius: 12,
                                 ),
-                              ),
-                              Text(
-                                '+${c.points} pts',
-                                style: TextStyle(
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  completed
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
                                   color: completed
                                       ? Colors.greenAccent
                                       : Colors.blueAccent,
-                                  fontWeight: FontWeight.bold,
+                                  size: 24,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        c.description,
+                                        style: TextStyle(
+                                          color: completed
+                                              ? Colors.greenAccent.withOpacity(0.8)
+                                              : Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '+${c.points} pts',
+                                      style: TextStyle(
+                                        color: completed
+                                            ? Colors.greenAccent
+                                            : Colors.blueAccent,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    if (!completed)
+                                      const Text(
+                                        'Tap to complete',
+                                        style: TextStyle(
+                                          color: Colors.white54,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }).toList(),
@@ -321,9 +382,17 @@ class DashboardScreen extends StatelessWidget {
                       color: Colors.yellowAccent,
                       icon: Icons.emoji_events,
                     ),
+                    NeonButton(
+                      text: 'Profile',
+                      onPressed: () => Navigator.pushNamed(context, '/profile'),
+                      color: Colors.purpleAccent,
+                      icon: Icons.person,
+                    ),
                   ],
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         );

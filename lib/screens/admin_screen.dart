@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
+import '../services/notification_service.dart';
 import '../models/dropoff_model.dart';
 import '../widgets/neon_button.dart';
 
@@ -27,11 +28,14 @@ class AdminScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             const Text('Pending Submissions',
                 style: TextStyle(
                   color: Colors.greenAccent,
@@ -116,16 +120,21 @@ class AdminDropOffCard extends StatelessWidget {
 
   static Future<void> _handleConfirm(BuildContext context,
       SupabaseService supabaseService, DropOff dropOff) async {
-    final points = _getPoints(dropOff.itemName);
-    await supabaseService.confirmDropOff(dropOff: dropOff, points: points);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Drop-off confirmed (+$points pts)',
-            style: const TextStyle(color: Colors.white)),
-        backgroundColor: Colors.greenAccent.withValues(alpha: 0.8),
-      ),
-    );
+    try {
+      final points = _getPoints(dropOff.itemName);
+      await supabaseService.confirmDropOff(dropOff: dropOff, points: points);
+      if (!context.mounted) return;
+      NotificationService.showSuccess(
+        context,
+        'Drop-off confirmed! User earned +$points points.',
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      NotificationService.showError(
+        context,
+        'Failed to confirm drop-off. Please try again.',
+      );
+    }
   }
 
   static int _getPoints(String itemName) {

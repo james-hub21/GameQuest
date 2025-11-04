@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/neon_button.dart';
 
 class AddItemScreen extends StatefulWidget {
@@ -117,35 +118,34 @@ class _AddItemScreenState extends State<AddItemScreen> {
       setState(() {
         isSubmitting = true;
       });
-      await supabaseService.addDropOff(
-        userId: user.id,
-        itemName: selectedItem!,
-        verifiedLocation: 'UIC Drop-Off',
-        photoUrl: _photoUrl,
-      );
-      if (!mounted) return;
-      setState(() {
-        isSubmitting = false;
-        _photoUrl = null;
-      });
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Colors.black,
-          title: const Text('Submitted',
-              style: TextStyle(color: Colors.greenAccent)),
-          content: const Text('Your item is pending admin confirmation.',
-              style: TextStyle(color: Colors.white)),
-          actions: [
-            NeonButton(
-              text: 'OK',
-              onPressed: () => Navigator.pop(context),
-              color: Colors.greenAccent,
-            ),
-          ],
-        ),
-      );
-      Navigator.pop(context);
+      try {
+        await supabaseService.addDropOff(
+          userId: user.id,
+          itemName: selectedItem!,
+          verifiedLocation: 'UIC Drop-Off',
+          photoUrl: _photoUrl,
+        );
+        if (!mounted) return;
+        setState(() {
+          isSubmitting = false;
+          selectedItem = null;
+          _photoUrl = null;
+        });
+        NotificationService.showSuccess(
+          context,
+          'Item submitted successfully! Pending admin confirmation.',
+        );
+        Navigator.pop(context);
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          isSubmitting = false;
+        });
+        NotificationService.showError(
+          context,
+          'Failed to submit item. Please try again.',
+        );
+      }
     }
   }
 
@@ -162,15 +162,33 @@ class _AddItemScreenState extends State<AddItemScreen> {
     setState(() {
       isUploading = true;
     });
-    final url = await supabaseService.pickAndUpload(
-      bucket: 'uploads',
-      path: 'dropoffs/${user.id}',
-    );
-    if (mounted) {
-      setState(() {
-        _photoUrl = url ?? _photoUrl;
-        isUploading = false;
-      });
+    try {
+      final url = await supabaseService.pickAndUpload(
+        bucket: 'uploads',
+        path: 'dropoffs/${user.id}',
+      );
+      if (mounted) {
+        setState(() {
+          _photoUrl = url ?? _photoUrl;
+          isUploading = false;
+        });
+        if (url != null) {
+          NotificationService.showSuccess(
+            context,
+            'Photo uploaded successfully!',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isUploading = false;
+        });
+        NotificationService.showError(
+          context,
+          'Failed to upload photo. Please try again.',
+        );
+      }
     }
   }
 }
