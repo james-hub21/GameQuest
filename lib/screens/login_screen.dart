@@ -103,21 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         isLoading: auth.isLoading,
                       ),
                       const SizedBox(height: 12),
-                      NeonButton(
-                        text: 'Sign in with Google',
-                        onPressed: _handleGoogleSignIn,
-                        color: Colors.blueAccent,
-                        icon: Icons.g_mobiledata,
-                        isLoading: auth.isLoading,
-                      ),
-                      const SizedBox(height: 12),
-                      NeonButton(
-                        text: 'Test User (Demo)',
-                        onPressed: _handleTestUserSignIn,
-                        color: Colors.purpleAccent,
-                        icon: Icons.person_outline,
-                        isLoading: auth.isLoading,
-                      ),
                       const SizedBox(height: 24),
                       TextButton(
                         onPressed: () {
@@ -192,38 +177,4 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _handleGoogleSignIn() {
-    _googleSignInAsync();
-  }
-
-  Future<void> _googleSignInAsync() async {
-    final auth = Provider.of<AuthService>(context, listen: false);
-    await auth.signInWithGoogle();
-    
-    if (!mounted) return;
-    
-    if (auth.error != null) {
-      NotificationService.showError(context, auth.error!);
-    }
-  }
-
-  void _handleTestUserSignIn() {
-    _testUserSignInAsync();
-  }
-
-  Future<void> _testUserSignInAsync() async {
-    final auth = Provider.of<AuthService>(context, listen: false);
-    await auth.signInAsTestUser();
-    
-    if (!mounted) return;
-    
-    if (auth.error == null && auth.user != null) {
-      NotificationService.showSuccess(
-        context,
-        'Signed in as test user successfully!',
-      );
-    } else if (auth.error != null) {
-      NotificationService.showError(context, auth.error!);
-    }
-  }
 }

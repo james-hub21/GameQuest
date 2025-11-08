@@ -66,95 +66,174 @@ class HistoryScreen extends StatelessWidget {
               ),
             );
           }
-          return ListView.builder(
+          final pending = dropOffs
+              .where((d) => d.status == 'pending')
+              .toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          final confirmed = dropOffs
+              .where((d) => d.status == 'confirmed')
+              .toList()
+            ..sort((a, b) => (b.confirmedAt ?? b.createdAt)
+                .compareTo(a.confirmedAt ?? a.createdAt));
+
+          return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            itemCount: dropOffs.length,
-            itemBuilder: (context, i) {
-              final d = dropOffs[i];
-              if (d.status != 'confirmed') return const SizedBox.shrink();
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.blueAccent, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blueAccent.withValues(alpha: 0.4),
-                      blurRadius: 12,
-                      spreadRadius: 0.5,
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.blueAccent.withValues(alpha: 0.2),
-                        ),
-                        child: const Icon(
-                          Icons.devices,
-                          color: Colors.blueAccent,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              d.itemName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Points: ${d.pointsEarned} | ${d.verifiedLocation ?? "UIC"}',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (d.confirmedAt != null)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${d.confirmedAt!.month}/${d.confirmedAt!.day}',
-                              style: const TextStyle(
-                                color: Colors.greenAccent,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Text(
-                              '${d.confirmedAt!.hour}:${d.confirmedAt!.minute.toString().padLeft(2, '0')}',
-                              style: const TextStyle(
-                                color: Colors.greenAccent,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
+            children: [
+              if (pending.isNotEmpty) ...[
+                const Text(
+                  'Pending',
+                  style: TextStyle(
+                    color: Colors.orangeAccent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
                 ),
-              );
-            },
+                const SizedBox(height: 8),
+                ...pending.map(
+                  (d) => _HistoryCard(
+                    dropOff: d,
+                    borderColor: Colors.orangeAccent,
+                    location: d.verifiedLocation ??
+                        'Father Selga St., Davao City, Davao del Sur',
+                    statusText: 'Pending',
+                    statusColor: Colors.orangeAccent,
+                    timestamp: d.createdAt,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              const Text(
+                'Confirmed',
+                style: TextStyle(
+                  color: Colors.greenAccent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...confirmed.map(
+                (d) => _HistoryCard(
+                  dropOff: d,
+                  borderColor: Colors.blueAccent,
+                  location: d.verifiedLocation ??
+                      'Father Selga St., Davao City, Davao del Sur',
+                  statusText: 'Confirmed',
+                  statusColor: Colors.greenAccent,
+                  timestamp: d.confirmedAt ?? d.createdAt,
+                ),
+              ),
+            ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _HistoryCard extends StatelessWidget {
+  final DropOff dropOff;
+  final Color borderColor;
+  final String location;
+  final String statusText;
+  final Color statusColor;
+  final DateTime timestamp;
+
+  const _HistoryCard({
+    required this.dropOff,
+    required this.borderColor,
+    required this.location,
+    required this.statusText,
+    required this.statusColor,
+    required this.timestamp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: borderColor.withValues(alpha: 0.4),
+            blurRadius: 12,
+            spreadRadius: 0.5,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: borderColor.withValues(alpha: 0.2),
+              ),
+              child: Icon(
+                Icons.devices,
+                color: borderColor,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    dropOff.itemName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Points: ${dropOff.pointsEarned} | $location',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  statusText,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${timestamp.month}/${timestamp.day}',
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 12,
+                  ),
+                ),
+                Text(
+                  '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}',
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

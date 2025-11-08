@@ -100,14 +100,22 @@ class AdminScreen extends StatelessWidget {
   }
 }
 
-class AdminDropOffCard extends StatelessWidget {
+class AdminDropOffCard extends StatefulWidget {
   final DropOff dropOff;
   const AdminDropOffCard({super.key, required this.dropOff});
+
+  @override
+  State<AdminDropOffCard> createState() => _AdminDropOffCardState();
+}
+
+class _AdminDropOffCardState extends State<AdminDropOffCard> {
+  bool _isConfirming = false;
 
   @override
   Widget build(BuildContext context) {
     final supabaseService =
         Provider.of<SupabaseService>(context, listen: false);
+    final dropOff = widget.dropOff;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -194,9 +202,11 @@ class AdminDropOffCard extends StatelessWidget {
                 width: double.infinity,
                 child: NeonButton(
                   text: 'Confirm',
-                  onPressed: () => AdminDropOffCard._handleConfirm(
-                      context, supabaseService, dropOff),
+                  onPressed: _isConfirming
+                      ? null
+                      : () => _handleConfirm(context, supabaseService),
                   color: Colors.greenAccent,
+                  isLoading: _isConfirming,
                 ),
               ),
             ],
@@ -206,11 +216,13 @@ class AdminDropOffCard extends StatelessWidget {
     );
   }
 
-  static Future<void> _handleConfirm(BuildContext context,
-      SupabaseService supabaseService, DropOff dropOff) async {
+  Future<void> _handleConfirm(
+      BuildContext context, SupabaseService supabaseService) async {
     try {
-      final points = _getPoints(dropOff.itemName);
-      await supabaseService.confirmDropOff(dropOff: dropOff, points: points);
+      setState(() => _isConfirming = true);
+      final points = _getPoints(widget.dropOff.itemName);
+      await supabaseService
+          .confirmDropOff(dropOff: widget.dropOff, points: points);
       if (!context.mounted) return;
       NotificationService.showSuccess(
         context,
@@ -222,6 +234,10 @@ class AdminDropOffCard extends StatelessWidget {
         context,
         'Failed to confirm drop-off. Please try again.',
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isConfirming = false);
+      }
     }
   }
 

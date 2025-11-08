@@ -140,7 +140,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
         await supabaseService.addDropOff(
           userId: user.id,
           itemName: selectedItem!,
-          verifiedLocation: 'UIC Drop-Off',
+          verifiedLocation:
+              'Father Selga St., Davao City, Davao del Sur',
           photoUrl: _photoUrl,
         );
         if (!mounted) return;

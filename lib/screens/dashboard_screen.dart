@@ -17,6 +17,11 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  static const LatLng _uicCoordinates = LatLng(7.0699417, 125.6001476);
+  static const String _uicLocationName =
+      'University of the Immaculate Conception - Main Campus';
+  static const String _uicAddress =
+      'Father Selga St., Davao City, Davao del Sur';
 
   @override
   Widget build(BuildContext context) {
@@ -398,12 +403,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 20),
                   // Interactive Map - Mobile optimized
                   const Text(
-                    'UIC Drop-Off Location',
+                    _uicLocationName,
                     style: TextStyle(
                       color: Colors.yellowAccent,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    _uicAddress,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -428,7 +441,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       borderRadius: BorderRadius.circular(14),
                       child: FlutterMap(
                         options: const MapOptions(
-                          initialCenter: LatLng(41.8781, -87.6298), // UIC coordinates
+                          initialCenter: _uicCoordinates,
                           initialZoom: 16.0,
                           minZoom: 13.0,
                           maxZoom: 18.0,
@@ -445,7 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           MarkerLayer(
                             markers: [
                               Marker(
-                                point: const LatLng(41.8781, -87.6298), // UIC Drop-Off Location
+                                point: _uicCoordinates,
                                 width: 40,
                                 height: 40,
                                 child: Container(
